@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}سامانه رزرو نوبت{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@latest/Vazirmatn-font-face.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    {% block head_extra %}{% endblock %}
+</head>
+<body>
+    <div class="container">
+        <header class="app-header">
+            <div class="header-content">
+                <div class="header-brand">
+                    <a href="{{ url_for('index') }}"><h1>{% block header_title %}سامانه رزرو آنلاین نوبت{% endblock %}</h1></a>
+                </div>
+                <div class="nav-user-section">
+                    <a href="{{ url_for('my_appointments') }}" class="nav-link user-nav-link">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-user"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                        <span>{% if logged_in_phone %}نوبت‌های من ({{ logged_in_phone }}){% else %}پیگیری نوبت{% endif %}</span>
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        {% if current_tehran_shamsi_display %}
+        <div class="current-time-banner">
+            <p><strong id="live-clock-label">زمان فعلی (تهران):</strong> {{ current_tehran_shamsi_display|safe }}</p>
+        </div>
+        {% endif %}
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="message {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <main class="main-content-area">
+            {% block content %}{% endblock %}
+        </main>
+
+        <footer class="app-footer">
+            <p>&copy; ۱۴۰۳ - کلیه حقوق این سامانه محفوظ است.</p>
+        </footer>
+    </div>
+
+    <script>
+        function updateLiveClientTime() {
+            const liveTimeSpan = document.getElementById('live-time');
+            if (liveTimeSpan) {
+                const now = new Date(); // Client's local time
+                const hours = now.getHours().toString().padStart(2, '0');
+                const minutes = now.getMinutes().toString().padStart(2, '0');
+                const seconds = now.getSeconds().toString().padStart(2, '0');
+                liveTimeSpan.textContent = `${hours}:${minutes}:${seconds}`;
+            }
+        }
+
+        // Only run the clock if the element is present
+        if (document.getElementById('live-time')) {
+            setInterval(updateLiveClientTime, 1000);
+            // The initial full date-time string is rendered by Flask with the correct Shamsi date.
+            // The JS only updates the HH:MM:SS part within the pre-rendered structure.
+        }
+    </script>
+    {% block scripts_extra %}{% endblock %}
+</body>
+</html>
