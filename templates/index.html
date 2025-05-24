@@ -9,14 +9,44 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-
-    {% extends "layout_base.html" %}
+{% extends "layout_base.html" %}
 
 {% block title %}رزرو آنلاین نوبت{% endblock %}
 
 {% block header_title %}سامانه رزرو آنلاین نوبت{% endblock %}
 
 {% block content %}
+<div class="booking-form-container">
+    <form action="{{ url_for('book_appointment') }}" method="POST" class="booking-form">
+        <div class="form-group">
+            <label for="timeslot">انتخاب زمان(های) مورد نظر:</label>
+            <p class="form-hint">
+                بازه زمانی {{ APPOINTMENT_DURATION_MINUTES }} دقیقه‌ای از ۱۰ صبح تا ۱۰ شب.
+                <br>
+                برای امروز، فقط زمان‌های آینده نمایش داده می‌شود.
+                <br>
+                می‌توانید چند زمان را انتخاب کنید (با نگه داشتن Ctrl یا Cmd و کلیک).
+            </p>
+            <select name="timeslot" id="timeslot" required multiple size="10">
+                {% if slots %}
+                    {% for slot in slots %}
+                        <option value="{{ slot.value }}">{{ slot.display }}</option>
+                    {% endfor %}
+                {% else %}
+                    <option value="" disabled>در حال حاضر هیچ زمان خالی برای رزرو موجود نیست.</option>
+                {% endif %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="phone_number">شماره تلفن همراه:</label>
+             <p class="form-hint">جهت اطلاع‌رسانی و تأیید نوبت.</p>
+            <input type="tel" id="phone_number" name="phone_number" pattern="[0-9]{7,15}" placeholder="مثال: ۰۹۱۲۳۴۵۶۷۸۹" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary">ثبت و رزرو نوبت(ها)</button>
+    </form>
+</div>
     {% if not slots and not get_flashed_messages(with_categories=true) %}
         <div class="no-slots-message">
             <p>متأسفانه تمامی نوبت‌های قابل رزرو برای هفته آینده پر شده‌اند یا هنوز زمانی تعریف نشده است. لطفاً بعداً مجدداً تلاش فرمایید.</p>
@@ -25,10 +55,9 @@
     {% endblock %}
 
     {% block scripts_extra %}
-    <script>
-        // Pass appointment duration to JS if needed for other dynamic calculations
-        const APPOINTMENT_DURATION_MINUTES = {{ APPOINTMENT_DURATION_MINUTES }};
-    </script>
+    {# You can pass APPOINTMENT_DURATION_MINUTES from app.py if needed in JS here #}
+    {# For example, if you add it to the context processor or the index route's render_template call #}
+    {# <script> const APPOINTMENT_DURATION_MINUTES = {{ APPOINTMENT_DURATION_MINUTES }}; </script> #}
 {% endblock %}
 </body>
 </html>

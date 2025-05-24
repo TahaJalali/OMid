@@ -118,10 +118,15 @@ def inject_global_vars():
     current_tehran_datetime_obj = get_current_tehran_time()
     current_tehran_shamsi_display_for_layout = gregorian_dt_to_shamsi_str_obj(current_tehran_datetime_obj, SHAMSI_DISPLAY_FORMAT_CURRENT_TIME)
     
+    # Add Unix timestamp for client-side clock synchronization
+    initial_tehran_timestamp_ms = int(current_tehran_datetime_obj.timestamp() * 1000)
+
+    logged_in_phone = session.get('logged_in_phone')
     return dict(
-        current_tehran_shamsi_display_for_layout=current_tehran_shamsi_display_for_layout, # Renamed for clarity
-        logged_in_phone=session.get('logged_in_phone'),
-        APPOINTMENT_DURATION_MINUTES=APPOINTMENT_DURATION_MINUTES # Make it globally available
+        current_tehran_shamsi_display_for_layout=current_tehran_shamsi_display_for_layout,
+        logged_in_phone=logged_in_phone,
+        APPOINTMENT_DURATION_MINUTES=APPOINTMENT_DURATION_MINUTES,
+        initial_tehran_timestamp_ms=initial_tehran_timestamp_ms # Pass this to templates
     )
 
 # --- Routes ---
