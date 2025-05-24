@@ -15,8 +15,9 @@ DEVICE_ID_COOKIE_NAME = 'app_device_id_v1'
 TEHRAN_TZ = pytz.timezone('Asia/Tehran')
 SHAMSI_FORMAT_FULL = "%A، %d %B %Y، ساعت %H:%M"
 SHAMSI_FORMAT_DATETIME_ONLY = "%d %B %Y، ساعت %H:%M"
+
 SHAMSI_DISPLAY_FORMAT_CURRENT_TIME_BASE = "%A، %d %B %Y، ساعت " 
-SHAMSI_DISPLAY_FORMAT_CURRENT_TIME = f"{SHAMSI_DISPLAY_FORMAT_CURRENT_TIME_BASE}<span id='live-time'></span>"
+SHAMSI_DISPLAY_FORMAT_CURRENT_TIME = f"{SHAMSI_DISPLAY_FORMAT_CURRENT_TIME_BASE}<span id='live-time'>%H:%M:%S</span>"
 APPOINTMENT_DURATION_MINUTES = 45
 
 # --- Database Helper Functions ---
