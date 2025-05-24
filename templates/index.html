@@ -1,14 +1,3 @@
-
-<!DOCTYPE html>
-<html lang="fa" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>رزرو آنلاین نوبت</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@latest/Vazirmatn-font-face.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
-<body>
 {% extends "layout_base.html" %}
 
 {% block title %}رزرو آنلاین نوبت{% endblock %}
@@ -47,17 +36,14 @@
         <button type="submit" class="btn btn-primary">ثبت و رزرو نوبت(ها)</button>
     </form>
 </div>
-    {% if not slots and not get_flashed_messages(with_categories=true) %}
-        <div class="no-slots-message">
-            <p>متأسفانه تمامی نوبت‌های قابل رزرو برای هفته آینده پر شده‌اند یا هنوز زمانی تعریف نشده است. لطفاً بعداً مجدداً تلاش فرمایید.</p>
-        </div>
-    {% endif %}
-    {% endblock %}
 
-    {% block scripts_extra %}
-    {# You can pass APPOINTMENT_DURATION_MINUTES from app.py if needed in JS here #}
-    {# For example, if you add it to the context processor or the index route's render_template call #}
-    {# <script> const APPOINTMENT_DURATION_MINUTES = {{ APPOINTMENT_DURATION_MINUTES }}; </script> #}
+{% if not slots and not get_flashed_messages(with_categories=true) %}
+    <div class="no-slots-message">
+        <p>متأسفانه تمامی نوبت‌های قابل رزرو برای هفته آینده پر شده‌اند یا هنوز زمانی تعریف نشده است. لطفاً بعداً مجدداً تلاش فرمایید.</p>
+    </div>
+{% endif %}
 {% endblock %}
-</body>
-</html>
+
+{% block scripts_extra %}
+{# No specific extra scripts needed here for now #}
+{% endblock %}

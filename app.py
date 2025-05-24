@@ -7,7 +7,7 @@ import uuid
 
 app = Flask(__name__)
 # IMPORTANT: Change this secret key for production!
-app.secret_key = 'your_very_secret_key_for_flash_messages_and_session_!@#$_MUST_CHANGE_VERY_MUCH'
+app.secret_key = 'your_very_secret_key_for_flash_messages_and_session_!@#$_MUST_CHANGE_VERY_MUCH_AGAIN'
 DATABASE = 'appointments.db'
 DEVICE_ID_COOKIE_NAME = 'app_device_id_v1' 
 
@@ -54,7 +54,7 @@ def gregorian_to_shamsi_str(gregorian_dt_str, format_str=SHAMSI_FORMAT_FULL):
         return gregorian_dt_str
 
 def gregorian_dt_to_shamsi_str_obj(gregorian_dt_object, format_str=SHAMSI_FORMAT_FULL):
-    if gregorian_dt_object.tzinfo is not None: # Ensure naive for jdatetime if it expects local wall time
+    if gregorian_dt_object.tzinfo is not None: 
         gregorian_dt_object = gregorian_dt_object.astimezone(TEHRAN_TZ).replace(tzinfo=None)
     shamsi_dt = jdatetime.datetime.fromgregorian(datetime=gregorian_dt_object)
     return shamsi_dt.strftime(format_str)
@@ -117,16 +117,13 @@ def generate_time_slots():
 def inject_global_vars():
     current_tehran_datetime_obj = get_current_tehran_time()
     current_tehran_shamsi_display_for_layout = gregorian_dt_to_shamsi_str_obj(current_tehran_datetime_obj, SHAMSI_DISPLAY_FORMAT_CURRENT_TIME)
+    initial_tehran_timestamp_ms = int(current_tehran_datetime_obj.timestamp() * 1000) # For JS clock
     
-    # Add Unix timestamp for client-side clock synchronization
-    initial_tehran_timestamp_ms = int(current_tehran_datetime_obj.timestamp() * 1000)
-
-    logged_in_phone = session.get('logged_in_phone')
     return dict(
         current_tehran_shamsi_display_for_layout=current_tehran_shamsi_display_for_layout,
-        logged_in_phone=logged_in_phone,
+        logged_in_phone=session.get('logged_in_phone'),
         APPOINTMENT_DURATION_MINUTES=APPOINTMENT_DURATION_MINUTES,
-        initial_tehran_timestamp_ms=initial_tehran_timestamp_ms # Pass this to templates
+        initial_tehran_timestamp_ms=initial_tehran_timestamp_ms 
     )
 
 # --- Routes ---
@@ -230,6 +227,9 @@ def my_appointments():
     device_info_to_display = None
     form_phone_number = "" 
     current_logged_in_phone = session.get('logged_in_phone')
+    
+    response_needed_for_cookie = False
+    newly_generated_device_id = None
 
     if request.method == 'POST':
         phone_to_verify = request.form.get('phone_number_view', '').strip()
@@ -240,9 +240,14 @@ def my_appointments():
             form_phone_number = phone_to_verify 
         else:
             session['logged_in_phone'] = phone_to_verify
-            current_logged_in_phone = phone_to_verify # Update for current request processing
+            current_logged_in_phone = phone_to_verify
             
-            device_id = request.cookies.get(DEVICE_ID_COOKIE_NAME) or str(uuid.uuid4())
+            device_id = request.cookies.get(DEVICE_ID_COOKIE_NAME)
+            if not device_id:
+                device_id = str(uuid.uuid4())
+                newly_generated_device_id = device_id # Mark that we need to set this cookie
+                response_needed_for_cookie = True
+
             user_agent = request.headers.get('User-Agent', 'Unknown')
             ip_address = request.remote_addr 
             try:
@@ -265,12 +270,13 @@ def my_appointments():
                 db.rollback(); app.logger.error(f"Error updating device info on login: {e}")
             
             flash(f'نوبت‌های شما برای شماره {current_logged_in_phone} نمایش داده شد.', 'success')
-            response = make_response(redirect(url_for('my_appointments'))) # PRG pattern
-            if not request.cookies.get(DEVICE_ID_COOKIE_NAME) : # Set cookie if it was newly generated
-                 response.set_cookie(DEVICE_ID_COOKIE_NAME, device_id, max_age=365*24*60*60, httponly=True, samesite='Lax')
+            # Redirect to GET to show the data and set cookie if needed
+            response = make_response(redirect(url_for('my_appointments')))
+            if newly_generated_device_id:
+                response.set_cookie(DEVICE_ID_COOKIE_NAME, newly_generated_device_id, max_age=365*24*60*60, httponly=True, samesite='Lax')
             return response
 
-    # GET request or if POST had issues before reaching "login successful"
+    # This part handles GET requests or if POST had an issue before successful login
     if request.method == 'GET' and not current_logged_in_phone: 
         device_id_from_cookie = request.cookies.get(DEVICE_ID_COOKIE_NAME)
         if device_id_from_cookie:
@@ -278,7 +284,7 @@ def my_appointments():
             if user_device_info:
                 session['logged_in_phone'] = user_device_info['phone_number']
                 current_logged_in_phone = user_device_info['phone_number']
-                form_phone_number = current_logged_in_phone 
+                # No form_phone_number prefill here as it's an auto-login
                 flash('نوبت‌های شما بر اساس اطلاعات دستگاه شما (ورود خودکار) نمایش داده شد.', 'info')
                 ip_address = request.remote_addr
                 try:
@@ -288,7 +294,7 @@ def my_appointments():
                 except Exception as e:
                     db.rollback(); app.logger.error(f"Error updating activity on auto-login: {e}")
 
-    if current_logged_in_phone: # Populate data if "logged in"
+    if current_logged_in_phone: 
         appts_from_db = db.execute('SELECT timeslot FROM appointments WHERE phone_number = ? ORDER BY timeslot ASC', (current_logged_in_phone,)).fetchall()
         current_tehran_dt_for_status = get_current_tehran_time()
         for appt in appts_from_db:
@@ -304,11 +310,16 @@ def my_appointments():
                 'ip_address': device_data['last_login_ip']
             }
     
-    # This is for GET requests or if POST failed before redirect
+    # This is for GET requests or if POST failed validation before redirect
+    # form_phone_number should be set if POST failed validation
+    if request.method == 'POST' and not current_logged_in_phone and not form_phone_number: # If POST failed early
+        form_phone_number = request.form.get('phone_number_view', '').strip()
+
+
     return render_template('my_appointments.html',
                            appointments=appointments_list,
-                           logged_in_phone=current_logged_in_phone, # Passed from session
-                           form_phone_number=form_phone_number, # Value for the input field
+                           logged_in_phone=current_logged_in_phone, 
+                           form_phone_number=form_phone_number, 
                            device_info=device_info_to_display)
 
 

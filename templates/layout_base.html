@@ -24,9 +24,9 @@
             </div>
         </header>
 
-        {% if current_tehran_shamsi_display %}
+        {% if current_tehran_shamsi_display_for_layout %} 
         <div class="current-time-banner">
-            <p><strong id="live-clock-label">زمان فعلی (تهران):</strong> {{ current_tehran_shamsi_display|safe }}</p>
+            <p><strong id="live-clock-label">زمان فعلی (تهران):</strong> {{ current_tehran_shamsi_display_for_layout|safe }}</p>
         </div>
         {% endif %}
 
@@ -49,80 +49,50 @@
         </footer>
     </div>
 
-<script>
-        // Variables to store server time details and client-server offset
+    <script>
         let serverTimeAtLoadMs = 0;
         let clientTimeAtLoadMs = 0;
-        let initialShamsiDatePart = ""; // To store the "شنبه، ۲۵ اسفند ۱۴۰۳، ساعت " part
 
         function initializeLiveClock() {
-            const liveTimeDisplayElement = document.getElementById('live-clock-display'); // The whole P tag content
-            const liveTimeSpan = document.getElementById('live-time'); // The span for HH:MM:S
+            const liveTimeSpan = document.getElementById('live-time');
 
-            {% if initial_tehran_timestamp_ms and current_tehran_shamsi_display_for_layout %}
+            {% if initial_tehran_timestamp_ms is defined %}
             serverTimeAtLoadMs = {{ initial_tehran_timestamp_ms }};
             clientTimeAtLoadMs = Date.now();
-
-            // Extract the static date part from the server-rendered string
-            // current_tehran_shamsi_display_for_layout includes a span like:
-            // "شنبه، ۲۵ اسفند ۱۴۰۳، ساعت <span id='live-time'>۱۱:۵۵:۰۰</span>"
-            // We need to get the part before the span.
-            let fullServerString = `{{ current_tehran_shamsi_display_for_layout|safe }}`;
-            let timeSpanHtml = `<span id="live-time">${liveTimeSpan ? liveTimeSpan.textContent : '00:00:00'}</span>`;
-            initialShamsiDatePart = fullServerString.replace(timeSpanHtml, "").trim();
             
             if (liveTimeSpan) {
-                updateTehranLiveTime(); // Initial call
+                updateTehranLiveTime(); 
                 setInterval(updateTehranLiveTime, 1000);
             }
+            {% else %}
+            if (liveTimeSpan) liveTimeSpan.textContent = "--:--:--";
             {% endif %}
         }
 
         function updateTehranLiveTime() {
             const liveTimeSpan = document.getElementById('live-time');
-            const liveClockLabel = document.getElementById('live-clock-label'); // "زمان فعلی (تهران):"
-            const liveClockDisplayElement = document.getElementById('live-clock-display'); // The container of the full string
 
             if (liveTimeSpan && serverTimeAtLoadMs > 0) {
-                // Calculate current server time based on initial offset
                 let clientNowMs = Date.now();
                 let clientElapsedTimeMs = clientNowMs - clientTimeAtLoadMs;
                 let currentEstimatedServerTimeMs = serverTimeAtLoadMs + clientElapsedTimeMs;
                 
                 let currentTehranTime = new Date(currentEstimatedServerTimeMs);
 
-                // We need to format this Date object (which is based on Tehran time)
-                // into HH:MM:SS. The Date object itself will be in client's timezone
-                // representation for getHours(), etc. unless we play with UTC methods.
-                // For Tehran (UTC+3:30):
-                let tehranHours = currentTehranTime.getUTCHours() + 3;
-                let tehranMinutes = currentTehranTime.getUTCMinutes() + 30;
+                // Format time for Tehran (UTC+3:30)
+                let tehranTotalMinutes = currentTehranTime.getUTCMinutes() + 30; 
+                let tehranHours = currentTehranTime.getUTCHours() + 3 + Math.floor(tehranTotalMinutes / 60); 
+                
+                tehranMinutes %= 60;
+                tehranHours %= 24; 
 
-                // Handle overflow from minutes
-                if (tehranMinutes >= 60) {
-                    tehranHours += Math.floor(tehranMinutes / 60);
-                    tehranMinutes %= 60;
-                }
-                // Handle overflow from hours (and day change, which we are not showing here for simplicity)
-                tehranHours %= 24;
-
-
-                // Convert to Persian numerals if desired (more complex, requires a mapping function)
-                // For now, using standard numerals.
                 const hoursStr = tehranHours.toString().padStart(2, '0');
                 const minutesStr = tehranMinutes.toString().padStart(2, '0');
-                const secondsStr = currentTehranTime.getUTCSeconds().toString().padStart(2, '0'); // Seconds are universal
+                const secondsStr = currentTehranTime.getUTCSeconds().toString().padStart(2, '0');
 
                 liveTimeSpan.textContent = `${hoursStr}:${minutesStr}:${secondsStr}`;
-                
-                // Optional: Update the full string if the date part was separate
-                // if (liveClockLabel && initialShamsiDatePart) {
-                //    liveClockDisplayElement.innerHTML = `${initialShamsiDatePart} ${hoursStr}:${minutesStr}:${secondsStr}`;
-                // }
             }
         }
-
-        // Initialize the clock when the DOM is ready
         document.addEventListener('DOMContentLoaded', initializeLiveClock);
     </script>
     {% block scripts_extra %}{% endblock %}

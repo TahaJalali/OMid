@@ -1,48 +1,34 @@
-<!DOCTYPE html>
-<html lang="fa" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تأییدیه رزرو نوبت</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@latest/Vazirmatn-font-face.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
-<body>
-    <div class="container">
-        <header class="app-header">
-            <h1>تأییدیه رزرو نوبت</h1>
-        </header>
+{% extends "layout_base.html" %}
 
-        <main class="confirmation-details">
-            <div class="icon-success">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="64" height="64">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z" fill="none"/>
-                    <path d="M12 4c-4.41 0-8 3.59-8 8s3.59 8 8 8 8-3.59 8-8-3.59-8-8-8zm-1.93 12.5L6.5 13.93l1.41-1.41L10.07 14.1l5.01-5.01L16.5 10.5l-6.43 6z" />
-                </svg>
-            </div>
-            <h2>نوبت(های) شما با موفقیت ثبت شد!</h2>
-            
-            {% if booked_slots_display_list %}
-                <p class="highlight">زمان(های) رزرو شده:</p>
-                <ul class="booked-slots-list">
-                    {% for timeslot_display in booked_slots_display_list %}
-                        <li><strong>{{ timeslot_display }}</strong></li>
-                    {% endfor %}
-                </ul>
-                {% if phone_number %}
-                    <p>شماره تلفن همراه ثبت شده: <strong>{{ phone_number }}</strong></p>
-                {% endif %}
-                <p class="info">لطفاً ۱۰ دقیقه قبل از زمان مقرر در محل حاضر باشید. در صورت نیاز به لغو یا تغییر نوبت، حداقل ۲۴ ساعت قبل اطلاع دهید.</p>
-            {% else %}
-                <p class="message error">خطا: اطلاعات نوبتی برای نمایش یافت نشد.</p>
-            {% endif %}
-            
-            <a href="{{ url_for('index') }}" class="btn btn-secondary">بازگشت به صفحه اصلی و رزرو نوبت جدید</a>
-        </main>
+{% block title %}تأییدیه رزرو نوبت{% endblock %}
 
-         <footer class="app-footer">
-            <p>&copy; ۱۴۰۳ - سامانه رزرو آنلاین نوبت</p>
-        </footer>
+{% block header_title %}تأییدیه رزرو نوبت{% endblock %}
+
+{% block content %}
+<div class="confirmation-details">
+    <div class="icon-success">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="64" height="64">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z" fill="none"/>
+            <path d="M12 4c-4.41 0-8 3.59-8 8s3.59 8 8 8 8-3.59 8-8-3.59-8-8-8zm-1.93 12.5L6.5 13.93l1.41-1.41L10.07 14.1l5.01-5.01L16.5 10.5l-6.43 6z" />
+        </svg>
     </div>
-</body>
-</html>
+    <h2>نوبت(های) شما با موفقیت ثبت شد!</h2>
+    
+    {% if booked_slots_display_list %}
+        <p class="highlight">زمان(های) رزرو شده:</p>
+        <ul class="booked-slots-list">
+            {% for timeslot_display in booked_slots_display_list %}
+                <li><strong>{{ timeslot_display }}</strong></li>
+            {% endfor %}
+        </ul>
+        {% if phone_number %}
+            <p>شماره تلفن همراه ثبت شده: <strong>{{ phone_number }}</strong></p>
+        {% endif %}
+        <p class="info">لطفاً ۱۰ دقیقه قبل از زمان مقرر در محل حاضر باشید. در صورت نیاز به لغو یا تغییر نوبت، حداقل ۲۴ ساعت قبل اطلاع دهید.</p>
+    {% else %}
+        <p class="message error">خطا: اطلاعات نوبتی برای نمایش یافت نشد.</p>
+    {% endif %}
+    
+    <a href="{{ url_for('index') }}" class="btn btn-secondary">بازگشت به صفحه اصلی</a>
+</div>
+{% endblock %}
