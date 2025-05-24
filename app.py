@@ -16,7 +16,7 @@ TEHRAN_TZ = pytz.timezone('Asia/Tehran')
 SHAMSI_FORMAT_FULL = "%A، %d %B %Y، ساعت %H:%M"
 SHAMSI_FORMAT_DATETIME_ONLY = "%d %B %Y، ساعت %H:%M"
 SHAMSI_DISPLAY_FORMAT_CURRENT_TIME_BASE = "%A، %d %B %Y، ساعت " 
-SHAMSI_DISPLAY_FORMAT_CURRENT_TIME = f"{SHAMSI_DISPLAY_FORMAT_CURRENT_TIME_BASE}<span id='live-time'>%H:%M:%S</span>"
+SHAMSI_DISPLAY_FORMAT_CURRENT_TIME = f"{SHAMSI_DISPLAY_FORMAT_CURRENT_TIME_BASE}<span id='live-time'></span>"
 APPOINTMENT_DURATION_MINUTES = 45
 
 # --- Database Helper Functions ---
@@ -113,20 +113,55 @@ def generate_time_slots():
     return slots
 
 # --- Context Processors ---
+# --- Add near other helper functions in app.py ---
+PERSIAN_NUMERALS = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹']
+
+def to_persian_numerals(text_string):
+    if not isinstance(text_string, str):
+        text_string = str(text_string)
+    persian_text = ""
+    for char in text_string:
+        if '0' <= char <= '9':
+            persian_text += PERSIAN_NUMERALS[int(char)]
+        else:
+            persian_text += char
+    return persian_text
+
+# --- Modify existing date/time formatting functions ---
+def gregorian_to_shamsi_str(gregorian_dt_str, format_str=SHAMSI_FORMAT_FULL):
+    try:
+        gregorian_dt = datetime.strptime(gregorian_dt_str, "%Y-%m-%d %H:%M")
+        shamsi_dt = jdatetime.datetime.fromgregorian(datetime=gregorian_dt)
+        return to_persian_numerals(shamsi_dt.strftime(format_str)) # Apply conversion
+    except ValueError:
+        return to_persian_numerals(gregorian_dt_str) # Apply conversion to fallback too
+
+def gregorian_dt_to_shamsi_str_obj(gregorian_dt_object, format_str=SHAMSI_FORMAT_FULL):
+    if gregorian_dt_object.tzinfo is not None: 
+        gregorian_dt_object = gregorian_dt_object.astimezone(TEHRAN_TZ).replace(tzinfo=None)
+    shamsi_dt = jdatetime.datetime.fromgregorian(datetime=gregorian_dt_object)
+    return to_persian_numerals(shamsi_dt.strftime(format_str)) # Apply conversion
+
+# --- Update the context processor to use the new numeral conversion for the live clock base ---
 @app.context_processor
 def inject_global_vars():
     current_tehran_datetime_obj = get_current_tehran_time()
-    current_tehran_shamsi_display_for_layout = gregorian_dt_to_shamsi_str_obj(current_tehran_datetime_obj, SHAMSI_DISPLAY_FORMAT_CURRENT_TIME)
     
-    # --- THIS LINE IS CRUCIAL ---
+    # Format the base date part with Persian numerals
+    shamsi_date_part_for_layout = gregorian_dt_to_shamsi_str_obj(
+        current_tehran_datetime_obj, 
+        SHAMSI_DISPLAY_FORMAT_CURRENT_TIME_BASE # "%A، %d %B %Y، ساعت "
+    )
+    # The time part will be added by JS, also needing Persian numerals
+    current_tehran_shamsi_display_for_layout = f"{shamsi_date_part_for_layout}<span id='live-time'>%H:%M:%S</span>" # Placeholder for JS
+    
     initial_tehran_timestamp_ms = int(current_tehran_datetime_obj.timestamp() * 1000)
-
-    logged_in_phone = session.get('logged_in_phone')
+    
     return dict(
         current_tehran_shamsi_display_for_layout=current_tehran_shamsi_display_for_layout,
-        logged_in_phone=logged_in_phone,
-        APPOINTMENT_DURATION_MINUTES=APPOINTMENT_DURATION_MINUTES,
-        initial_tehran_timestamp_ms=initial_tehran_timestamp_ms # Ensure this is passed
+        logged_in_phone=session.get('logged_in_phone'),
+        APPOINTMENT_DURATION_MINUTES=to_persian_numerals(APPOINTMENT_DURATION_MINUTES), # Convert if displayed directly
+        initial_tehran_timestamp_ms=initial_tehran_timestamp_ms 
     )
 
 # --- Routes ---

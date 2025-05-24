@@ -52,26 +52,39 @@
 <script>
         let serverTimeAtLoadMs = 0;
         let clientTimeAtLoadMs = 0;
+        const PERSIAN_NUMERALS_JS = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+
+        function toPersianNumeralsJS(text_string) {
+            if (typeof text_string !== 'string') {
+                text_string = String(text_string);
+            }
+            let persian_text = "";
+            for (let i = 0; i < text_string.length; i++) {
+                let char = text_string[i];
+                if (char >= '0' && char <= '9') {
+                    persian_text += PERSIAN_NUMERALS_JS[parseInt(char)];
+                } else {
+                    persian_text += char; // Keep non-digits as is (like ':')
+                }
+            }
+            return persian_text;
+        }
 
         function initializeLiveClock() {
             const liveTimeSpan = document.getElementById('live-time');
 
-            // Check if the timestamp variable is defined by Flask/Jinja
-            {% if initial_tehran_timestamp_ms is defined %} // JINJA IF
-            serverTimeAtLoadMs = {{ initial_tehran_timestamp_ms }}; // JINJA VARIABLE
-            clientTimeAtLoadMs = Date.now(); // Get client's current time in ms
+            {% if initial_tehran_timestamp_ms is defined %}
+            serverTimeAtLoadMs = {{ initial_tehran_timestamp_ms }};
+            clientTimeAtLoadMs = Date.now(); 
             
-            if (liveTimeSpan) { // JAVASCRIPT IF
+            if (liveTimeSpan) {
                 updateTehranLiveTime(); 
                 setInterval(updateTehranLiveTime, 1000); 
             }
-            {% else %} // JINJA ELSE
-            // Fallback if the timestamp isn't available
-            if (liveTimeSpan) { // JAVASCRIPT IF
-                 liveTimeSpan.textContent = "--:--:--";
-            }
+            {% else %}
+            if (liveTimeSpan) liveTimeSpan.textContent = toPersianNumeralsJS("--:--:--"); // Persian placeholder
             console.warn("Initial Tehran timestamp not available for live clock.");
-            {% endif %} // JINJA ENDIF
+            {% endif %}
         }
 
         function updateTehranLiveTime() {
@@ -82,23 +95,20 @@
                 let clientElapsedTimeMs = clientNowMs - clientTimeAtLoadMs;
                 let currentEstimatedServerTimeMs = serverTimeAtLoadMs + clientElapsedTimeMs;
                 
-                // Calculate Tehran time (UTC+3:30)
                 let currentTehranTime = new Date(currentEstimatedServerTimeMs);
-                let utcHours = currentTehranTime.getUTCHours();
-                let utcMinutes = currentTehranTime.getUTCMinutes();
-                let utcSeconds = currentTehranTime.getUTCSeconds();
 
-                // Add 3 hours and 30 minutes for Tehran offset
-                let tehranTotalMinutes = utcHours * 60 + utcMinutes + 210; // 3*60+30=210
-                let tehranHours = Math.floor(tehranTotalMinutes / 60) % 24;
-                let tehranMinutes = tehranTotalMinutes % 60;
-                let tehranSeconds = utcSeconds;
+                let tehranTotalMinutes = currentTehranTime.getUTCMinutes() + 30; 
+                let tehranHours = currentTehranTime.getUTCHours() + 3 + Math.floor(tehranTotalMinutes / 60); 
+                
+                tehranMinutes %= 60; 
+                tehranHours %= 24;   
 
                 const hoursStr = tehranHours.toString().padStart(2, '0');
                 const minutesStr = tehranMinutes.toString().padStart(2, '0');
-                const secondsStr = tehranSeconds.toString().padStart(2, '0');
+                const secondsStr = currentTehranTime.getUTCSeconds().toString().padStart(2, '0');
 
-                liveTimeSpan.textContent = `${hoursStr}:${minutesStr}:${secondsStr}`;
+                // Convert to Persian numerals before displaying
+                liveTimeSpan.textContent = `${toPersianNumeralsJS(hoursStr)}:${toPersianNumeralsJS(minutesStr)}:${toPersianNumeralsJS(secondsStr)}`;
             }
         }
         document.addEventListener('DOMContentLoaded', initializeLiveClock);
