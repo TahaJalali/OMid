@@ -82,17 +82,21 @@
                 let clientElapsedTimeMs = clientNowMs - clientTimeAtLoadMs;
                 let currentEstimatedServerTimeMs = serverTimeAtLoadMs + clientElapsedTimeMs;
                 
+                // Calculate Tehran time (UTC+3:30)
                 let currentTehranTime = new Date(currentEstimatedServerTimeMs);
+                let utcHours = currentTehranTime.getUTCHours();
+                let utcMinutes = currentTehranTime.getUTCMinutes();
+                let utcSeconds = currentTehranTime.getUTCSeconds();
 
-                let tehranTotalMinutes = currentTehranTime.getUTCMinutes() + 30; 
-                let tehranHours = currentTehranTime.getUTCHours() + 3 + Math.floor(tehranTotalMinutes / 60); 
-                
-                tehranMinutes %= 60; 
-                tehranHours %= 24;   
+                // Add 3 hours and 30 minutes for Tehran offset
+                let tehranTotalMinutes = utcHours * 60 + utcMinutes + 210; // 3*60+30=210
+                let tehranHours = Math.floor(tehranTotalMinutes / 60) % 24;
+                let tehranMinutes = tehranTotalMinutes % 60;
+                let tehranSeconds = utcSeconds;
 
                 const hoursStr = tehranHours.toString().padStart(2, '0');
                 const minutesStr = tehranMinutes.toString().padStart(2, '0');
-                const secondsStr = currentTehranTime.getUTCSeconds().toString().padStart(2, '0');
+                const secondsStr = tehranSeconds.toString().padStart(2, '0');
 
                 liveTimeSpan.textContent = `${hoursStr}:${minutesStr}:${secondsStr}`;
             }
