@@ -9,77 +9,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    
-    <div class="container">
-        <header class="app-header">
-             <div class="nav-links">
-                {% if known_phone_for_device %}
-                    <a href="{{ url_for('my_appointments') }}" class="nav-link">نوبت‌های من ({{ known_phone_for_device }})</a>
-                {% else %}
-                    <a href="{{ url_for('my_appointments') }}" class="nav-link">پیگیری نوبت‌ها</a>
-                {% endif %}
-            </div>
-            <h1>سامانه رزرو آنلاین نوبت</h1>
-        </header>
 
-        {% if current_tehran_time_display %}
-        <div class="current-time-banner">
-            <p><strong>زمان فعلی (تهران):</strong> {{ current_tehran_time_display }}</p>
-        </div>
-        {% endif %}
-
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                <div class="flash-messages">
-                    {% for category, message in messages %}
-                        <div class="message {{ category }}">{{ message }}</div>
-                    {% endfor %}
-                </div>
-            {% endif %}
-        {% endwith %}
-
-        <main class="booking-form-container">
-            <form action="{{ url_for('book_appointment') }}" method="POST" class="booking-form">
-                <div class="form-group">
-                    <label for="timeslot">انتخاب زمان(های) مورد نظر:</label>
-                    <p class="form-hint">
-                        بازه زمانی ۴۵ دقیقه‌ای از ۱۰ صبح تا ۱۰ شب.
-                        <br>
-                        برای امروز، فقط زمان‌های آینده نمایش داده می‌شود.
-                        <br>
-                        می‌توانید چند زمان را انتخاب کنید (با نگه داشتن Ctrl یا Cmd و کلیک، یا کشیدن روی موبایل).
-                    </p>
-                    <select name="timeslot" id="timeslot" required multiple size="10">
-                        {% if slots %}
-                            {% for slot in slots %}
-                                <option value="{{ slot.value }}">{{ slot.display }}</option>
-                            {% endfor %}
-                        {% else %}
-                            <option value="" disabled>در حال حاضر هیچ زمان خالی برای رزرو موجود نیست.</option>
-                        {% endif %}
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label for="phone_number">شماره تلفن همراه:</label>
-                     <p class="form-hint">جهت اطلاع‌رسانی و تأیید نوبت.</p>
-                    <input type="tel" id="phone_number" name="phone_number" pattern="[0-9]{7,15}" placeholder="مثال: ۰۹۱۲۳۴۵۶۷۸۹" required>
-                </div>
-
-                <button type="submit" class="btn btn-primary">ثبت و رزرو نوبت(ها)</button>
-            </form>
-        </main>
-
-        {% if not slots and not get_flashed_messages(with_categories=true) %}
-            <div class="no-slots-message">
-                <p>متأسفانه تمامی نوبت‌های قابل رزرو برای هفته آینده پر شده‌اند یا هنوز زمانی تعریف نشده است. لطفاً بعداً مجدداً تلاش فرمایید.</p>
-            </div>
-        {% endif %}
-
-        <footer class="app-footer">
-            <p>&copy; ۱۴۰۳ - کلیه حقوق این سامانه محفوظ است.</p>
-        </footer>
-    </div>
     {% extends "layout_base.html" %}
 
 {% block title %}رزرو آنلاین نوبت{% endblock %}
@@ -87,37 +17,6 @@
 {% block header_title %}سامانه رزرو آنلاین نوبت{% endblock %}
 
 {% block content %}
-<div class="booking-form-container">
-    <form action="{{ url_for('book_appointment') }}" method="POST" class="booking-form">
-        <div class="form-group">
-            <label for="timeslot">انتخاب زمان(های) مورد نظر:</label>
-            <p class="form-hint">
-                بازه زمانی {{ APPOINTMENT_DURATION_MINUTES }} دقیقه‌ای از ۱۰ صبح تا ۱۰ شب.
-                <br>
-                برای امروز، فقط زمان‌های آینده نمایش داده می‌شود.
-                <br>
-                می‌توانید چند زمان را انتخاب کنید (با نگه داشتن Ctrl یا Cmd و کلیک).
-            </p>
-            <select name="timeslot" id="timeslot" required multiple size="10">
-                {% if slots %}
-                    {% for slot in slots %}
-                        <option value="{{ slot.value }}">{{ slot.display }}</option>
-                    {% endfor %}
-                {% else %}
-                    <option value="" disabled>در حال حاضر هیچ زمان خالی برای رزرو موجود نیست.</option>
-                {% endif %}
-            </select>
-        </div>
-
-        <div class="form-group">
-            <label for="phone_number">شماره تلفن همراه:</label>
-             <p class="form-hint">جهت اطلاع‌رسانی و تأیید نوبت.</p>
-            <input type="tel" id="phone_number" name="phone_number" pattern="[0-9]{7,15}" placeholder="مثال: ۰۹۱۲۳۴۵۶۷۸۹" required>
-        </div>
-
-        <button type="submit" class="btn btn-primary">ثبت و رزرو نوبت(ها)</button>
-    </form>
-</div>
     {% if not slots and not get_flashed_messages(with_categories=true) %}
         <div class="no-slots-message">
             <p>متأسفانه تمامی نوبت‌های قابل رزرو برای هفته آینده پر شده‌اند یا هنوز زمانی تعریف نشده است. لطفاً بعداً مجدداً تلاش فرمایید.</p>

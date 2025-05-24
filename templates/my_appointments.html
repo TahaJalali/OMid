@@ -8,69 +8,6 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <div class="container">
-        <header class="app-header">
-            <div class="nav-links">
-                <a href="{{ url_for('index') }}" class="nav-link">صفحه اصلی رزرو</a>
-            </div>
-            <h1>نوبت‌های من</h1>
-        </header>
-
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                <div class="flash-messages">
-                    {% for category, message in messages %}
-                        <div class="message {{ category }}">{{ message }}</div>
-                    {% endfor %}
-                </div>
-            {% endif %}
-        {% endwith %}
-
-        <main class="my-appointments-container">
-            {% if not phone_displayed or not device_id_known %}
-            <form method="POST" action="{{ url_for('my_appointments') }}" class="phone-entry-form">
-                <div class="form-group">
-                    <label for="phone_number_view">برای مشاهده نوبت‌های خود، شماره تلفن همراه‌تان را وارد کنید:</label>
-                    <input type="tel" id="phone_number_view" name="phone_number_view" value="{{ form_phone_number }}" pattern="[0-9]{7,15}" placeholder="مثال: ۰۹۱۲۳۴۵۶۷۸۹" required>
-                </div>
-                <button type="submit" class="btn btn-primary">نمایش نوبت‌ها</button>
-            </form>
-            {% endif %}
-
-            {% if phone_displayed %}
-                <div class="displayed-phone-info">
-                    <p>نوبت‌های رزرو شده برای شماره: <strong>{{ phone_displayed }}</strong></p>
-                    {% if device_id_known %}
-                         <p><a href="{{ url_for('forget_me') }}" class="btn btn-sm btn-outline-secondary">استفاده از شماره دیگر / فراموشی این دستگاه</a></p>
-                    {% endif %}
-                </div>
-
-                {% if appointments %}
-                    <ul class="appointments-list">
-                        {% for appt in appointments %}
-                            <li class="appointment-item status-{{ appt.status }}">
-                                <span class="appointment-time">{{ appt.shamsi_display }}</span>
-                                <span class="appointment-status-badge">
-                                    {% if appt.status == 'passed' %}گذشته{% endif %}
-                                    {% if appt.status == 'ongoing' %}درحال برگزاری{% endif %}
-                                    {% if appt.status == 'future' %}آینده{% endif %}
-                                    {% if appt.status == 'unknown' %}نامشخص{% endif %}
-                                </span>
-                            </li>
-                        {% endfor %}
-                    </ul>
-                {% else %}
-                    <p class="no-appointments-found">هیچ نوبتی برای این شماره تلفن یافت نشد.</p>
-                {% endif %}
-            {% elif request.method == 'POST' %} {# Executed only if form submitted but no phone was valid to display #}
-                <p class="no-appointments-found">لطفاً شماره تلفن معتبری وارد کنید.</p>
-            {% endif %}
-        </main>
-
-        <footer class="app-footer">
-            <p>&copy; ۱۴۰۳ - سامانه رزرو آنلاین نوبت</p>
-        </footer>
-    </div>
         {% extends "layout_base.html" %}
 
         {% block title %}نوبت‌های من{% endblock %}
