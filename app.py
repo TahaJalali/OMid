@@ -117,13 +117,16 @@ def generate_time_slots():
 def inject_global_vars():
     current_tehran_datetime_obj = get_current_tehran_time()
     current_tehran_shamsi_display_for_layout = gregorian_dt_to_shamsi_str_obj(current_tehran_datetime_obj, SHAMSI_DISPLAY_FORMAT_CURRENT_TIME)
-    initial_tehran_timestamp_ms = int(current_tehran_datetime_obj.timestamp() * 1000) # For JS clock
     
+    # --- THIS LINE IS CRUCIAL ---
+    initial_tehran_timestamp_ms = int(current_tehran_datetime_obj.timestamp() * 1000)
+
+    logged_in_phone = session.get('logged_in_phone')
     return dict(
         current_tehran_shamsi_display_for_layout=current_tehran_shamsi_display_for_layout,
-        logged_in_phone=session.get('logged_in_phone'),
+        logged_in_phone=logged_in_phone,
         APPOINTMENT_DURATION_MINUTES=APPOINTMENT_DURATION_MINUTES,
-        initial_tehran_timestamp_ms=initial_tehran_timestamp_ms 
+        initial_tehran_timestamp_ms=initial_tehran_timestamp_ms # Ensure this is passed
     )
 
 # --- Routes ---
@@ -325,9 +328,14 @@ def my_appointments():
 
 @app.route('/logout')
 def logout():
-    session.pop('logged_in_phone', None)
-    flash('شما با موفقیت از بخش پیگیری نوبت خارج شدید. برای مشاهده مجدد، شماره تلفن را وارد کنید.', 'info')
-    return redirect(url_for('my_appointments'))
+    session.pop('logged_in_phone', None) # Clears the server-side session state
+    
+    # Create a response object to delete the cookie
+    response = make_response(redirect(url_for('my_appointments')))
+    response.delete_cookie(DEVICE_ID_COOKIE_NAME) # Delete the device_id cookie
+    
+    flash('شما با موفقیت خارج شدید. برای مشاهده مجدد، شماره تلفن را وارد کنید.', 'info')
+    return response
 
 
 if __name__ == '__main__':

@@ -24,11 +24,11 @@
             </div>
         </header>
 
-        {% if current_tehran_shamsi_display_for_layout %} 
-        <div class="current-time-banner">
-            <p><strong id="live-clock-label">زمان فعلی (تهران):</strong> {{ current_tehran_shamsi_display_for_layout|safe }}</p>
-        </div>
-        {% endif %}
+            {% if current_tehran_shamsi_display_for_layout %} 
+            <div class="current-time-banner">
+                <p><strong id="live-clock-label">زمان فعلی (تهران):</strong> {{ current_tehran_shamsi_display_for_layout|safe }}</p>
+            </div>
+            {% endif %}
 
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
@@ -49,24 +49,29 @@
         </footer>
     </div>
 
-    <script>
+<script>
         let serverTimeAtLoadMs = 0;
         let clientTimeAtLoadMs = 0;
 
         function initializeLiveClock() {
             const liveTimeSpan = document.getElementById('live-time');
 
-            {% if initial_tehran_timestamp_ms is defined %}
-            serverTimeAtLoadMs = {{ initial_tehran_timestamp_ms }};
-            clientTimeAtLoadMs = Date.now();
+            // Check if the timestamp variable is defined by Flask/Jinja
+            {% if initial_tehran_timestamp_ms is defined %} // JINJA IF
+            serverTimeAtLoadMs = {{ initial_tehran_timestamp_ms }}; // JINJA VARIABLE
+            clientTimeAtLoadMs = Date.now(); // Get client's current time in ms
             
-            if (liveTimeSpan) {
+            if (liveTimeSpan) { // JAVASCRIPT IF
                 updateTehranLiveTime(); 
-                setInterval(updateTehranLiveTime, 1000);
+                setInterval(updateTehranLiveTime, 1000); 
             }
-            {% else %}
-            if (liveTimeSpan) liveTimeSpan.textContent = "--:--:--";
-            {% endif %}
+            {% else %} // JINJA ELSE
+            // Fallback if the timestamp isn't available
+            if (liveTimeSpan) { // JAVASCRIPT IF
+                 liveTimeSpan.textContent = "--:--:--";
+            }
+            console.warn("Initial Tehran timestamp not available for live clock.");
+            {% endif %} // JINJA ENDIF
         }
 
         function updateTehranLiveTime() {
@@ -79,12 +84,11 @@
                 
                 let currentTehranTime = new Date(currentEstimatedServerTimeMs);
 
-                // Format time for Tehran (UTC+3:30)
                 let tehranTotalMinutes = currentTehranTime.getUTCMinutes() + 30; 
                 let tehranHours = currentTehranTime.getUTCHours() + 3 + Math.floor(tehranTotalMinutes / 60); 
                 
-                tehranMinutes %= 60;
-                tehranHours %= 24; 
+                tehranMinutes %= 60; 
+                tehranHours %= 24;   
 
                 const hoursStr = tehranHours.toString().padStart(2, '0');
                 const minutesStr = tehranMinutes.toString().padStart(2, '0');
